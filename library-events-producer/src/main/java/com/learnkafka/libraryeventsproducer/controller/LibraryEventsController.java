@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -24,7 +25,7 @@ public class LibraryEventsController {
     LibraryEventProducer libraryEventProducer;
 
     @PostMapping
-    public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException {
+    public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody @Valid LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException {
         log.info("before sendLibraryEvent");
 
         libraryEvent.setLibraryEventType(LibraryEventType.NEW);
