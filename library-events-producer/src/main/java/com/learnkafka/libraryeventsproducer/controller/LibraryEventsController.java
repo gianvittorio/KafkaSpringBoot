@@ -2,6 +2,7 @@ package com.learnkafka.libraryeventsproducer.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.learnkafka.libraryeventsproducer.domain.LibraryEvent;
+import com.learnkafka.libraryeventsproducer.domain.LibraryEventType;
 import com.learnkafka.libraryeventsproducer.producer.LibraryEventProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +27,9 @@ public class LibraryEventsController {
     public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException {
         log.info("before sendLibraryEvent");
 
-//        libraryEventProducer.sendLibraryEvent(libraryEvent);
+        libraryEvent.setLibraryEventType(LibraryEventType.NEW);
+        libraryEventProducer.sendLibraryEvent(libraryEvent);
 
-        SendResult<Integer, String> sendResult = libraryEventProducer.sendLibraryEventSynchronously(libraryEvent);
-
-        log.info("SendResult is {}", sendResult.toString());
         log.info("after sendLibraryEvent");
 
         return ResponseEntity.status(HttpStatus.CREATED)
