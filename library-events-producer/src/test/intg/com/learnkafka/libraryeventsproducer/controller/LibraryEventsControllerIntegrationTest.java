@@ -21,6 +21,7 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.MultiValueMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +48,6 @@ public class LibraryEventsControllerIntegrationTest {
     @BeforeEach
     public void setUp() {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.consumerProps("group1", "true", embeddedKafkaBroker));
-
 
         consumer = new DefaultKafkaConsumerFactory<>(configs, new IntegerDeserializer(), new StringDeserializer())
                 .createConsumer();
@@ -94,4 +94,64 @@ public class LibraryEventsControllerIntegrationTest {
         assertEquals(expectedValue, value);
 
     }
+
+    @Test
+    @DisplayName("Must update library event.")
+    public void putLibraryEventTest() {
+        // Given
+        Book book = Book.builder()
+                .bookId(123)
+                .bookAuthor("Dilip")
+                .bookName("Kafka Using SpringBoot")
+                .build();
+
+        LibraryEvent libraryEvent = LibraryEvent.builder()
+                .libraryEventId(1)
+                .book(book)
+                .build();
+
+        // When
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("accept", MediaType.APPLICATION_JSON_VALUE);
+        headers.set("content-type", MediaType.APPLICATION_JSON_VALUE);
+        HttpEntity<?> request = new HttpEntity<>(libraryEvent, headers);
+        ResponseEntity<LibraryEvent> responseEntity = restTemplate.exchange("/api/v1/libraryevent", HttpMethod.PUT, request, LibraryEvent.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+        ConsumerRecord<Integer, String> record = KafkaTestUtils.getSingleRecord(consumer, "library-events");
+        String expectedValue = "{\"libraryEventId\":1,\"libraryEventType\":\"UPDATE\",\"book\":" +
+                "{\"bookId\":123,\"bookName\":\"Kafka Using SpringBoot\",\"bookAuthor\":\"Dilip\"}}";
+
+        assertEquals(expectedValue, record.value());
+    }
+
+//    @Test
+//    @DisplayName("Must return bad request whenever attempting to update non existing record.")
+//    public void putLibraryEventFailureTest() {
+//        // Given
+//        Book book = Book.builder()
+//                .bookId(123)
+//                .bookAuthor("Dilip")
+//                .bookName("Kafka Using SpringBoot")
+//                .build();
+//
+//        LibraryEvent libraryEvent = LibraryEvent.builder()
+//                .libraryEventId(null)
+//                .book(book)
+//                .build();
+//
+//        // When
+//        HttpHeaders headers = new HttpHeaders();
+////        headers.set("accept", MediaType.APPLICATION_JSON_VALUE);
+////        headers.set("content-type", MediaType.APPLICATION_JSON_VALUE);
+//        HttpEntity<?> request = new HttpEntity<>(libraryEvent, headers);
+//        ResponseEntity<LibraryEvent> responseEntity = restTemplate.exchange("/api/v1/libraryevent", HttpMethod.PUT, request, LibraryEvent.class);
+//
+//        // Then
+////        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+////        String expectedValue = "Please, provide libraryEventId.";
+////        assertEquals(expectedValue, responseEntity.toString());
+//    }
 }

@@ -7,13 +7,12 @@ import com.learnkafka.libraryeventsproducer.producer.LibraryEventProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.print.attribute.standard.Media;
 import javax.validation.Valid;
 import java.util.concurrent.ExecutionException;
 
@@ -24,7 +23,7 @@ public class LibraryEventsController {
     @Autowired
     LibraryEventProducer libraryEventProducer;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody @Valid LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException {
         log.info("before sendLibraryEvent");
 
@@ -35,5 +34,19 @@ public class LibraryEventsController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(libraryEvent);
+    }
+
+    @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> putLibraryEvent(@RequestBody @Valid LibraryEvent libraryEvent) throws JsonProcessingException {
+        if (libraryEvent.getLibraryEventId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Please, provide libraryEventId.");
+        }
+
+        libraryEvent.setLibraryEventType(LibraryEventType.UPDATE);
+
+        libraryEventProducer.sendLibraryEvent(libraryEvent);
+
+        return ResponseEntity.ok(libraryEvent);
     }
 }
