@@ -14,21 +14,21 @@ import org.springframework.kafka.listener.ContainerProperties;
 @Configuration
 @EnableKafka
 public class LibraryEventsConsumerConfig {
-    @Bean
-    @ConditionalOnMissingBean(
-            name = {"kafkaListenerContainerFactory"}
-    )
-    ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
-            ConcurrentKafkaListenerContainerFactoryConfigurer configurer,
-            ObjectProvider<ConsumerFactory<Object, Object>> kafkaConsumerFactory
-    ) {
-        ConcurrentKafkaListenerContainerFactory<Object, Object> factory = new ConcurrentKafkaListenerContainerFactory();
-        configurer.configure(factory, (ConsumerFactory<Object, Object>) kafkaConsumerFactory);
-
-        factory.setConcurrency(3);
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL);
-
-        return factory;
-    }
+//    @Bean
+//    @ConditionalOnMissingBean(
+//            name = {"kafkaListenerContainerFactory"}
+//    )
+//    ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
+//            ConcurrentKafkaListenerContainerFactoryConfigurer configurer,
+//            ObjectProvider<ConsumerFactory<Object, Object>> kafkaConsumerFactory
+//    ) {
+//        ConcurrentKafkaListenerContainerFactory<Object, Object> factory = new ConcurrentKafkaListenerContainerFactory();
+//        configurer.configure(factory, (ConsumerFactory<Object, Object>) kafkaConsumerFactory);
+//
+//        factory.setConcurrency(3);
+//        factory.getContainerProperties()
+//                .setAckMode(ContainerProperties.AckMode.MANUAL);
+//
+//        return factory;
+//    }
 }
