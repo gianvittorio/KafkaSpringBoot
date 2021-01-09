@@ -2,6 +2,7 @@ package com.learnkafka.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learnkafka.entity.Book;
 import com.learnkafka.entity.LibraryEvent;
 import com.learnkafka.entity.LibraryEventType;
 import com.learnkafka.jpa.LibraryEventsRepository;
@@ -27,13 +28,40 @@ public class LibraryEventsService {
         switch (libraryEvent.getLibraryEventType()) {
             case NEW:
                 save(libraryEvent);
+
                 break;
             case UPDATE:
+                update(libraryEvent);
+
                 break;
             default:
                 log.info("Invalid Library Event Type");
+
                 break;
         }
+    }
+
+    private void update(LibraryEvent libraryEvent) {
+        if (libraryEvent.getLibraryEventId() == null) {
+            throw  new IllegalArgumentException("Library Event Id is null.");
+        }
+
+        libraryEventsRepository.findById(libraryEvent.getLibraryEventId())
+                .map(record -> {
+                    record.setLibraryEventType(LibraryEventType.UPDATE);
+
+                    Book book = record.getBook();
+                    Book libraryEventBook = libraryEvent.getBook();
+                    book.setBookAuthor(libraryEventBook.getBookAuthor());
+                    book.setBookName(libraryEventBook.getBookName());
+
+                    libraryEventsRepository.save(record);
+
+                    return record;
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Library Event Id not found."));
+
+                log.info("Library Event identified by id : {} was successfully updated.", libraryEvent.getLibraryEventId());
     }
 
     private void save(LibraryEvent libraryEvent) {
