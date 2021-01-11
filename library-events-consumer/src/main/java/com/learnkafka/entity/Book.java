@@ -13,16 +13,14 @@ import javax.validation.constraints.NotNull;
 @Entity
 public class Book {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @GeneratedValue
     private Integer bookId;
 
     private String bookName;
 
     private String bookAuthor;
 
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "libraryEventId")
+    @OneToOne(mappedBy = "book")
     @ToString.Exclude
     private LibraryEvent libraryEvent;
 }

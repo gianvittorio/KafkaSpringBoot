@@ -9,7 +9,12 @@ import com.learnkafka.jpa.LibraryEventsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 
 @Service
 @Slf4j
@@ -43,17 +48,14 @@ public class LibraryEventsService {
 
     private void update(LibraryEvent libraryEvent) {
         if (libraryEvent.getLibraryEventId() == null) {
-            throw  new IllegalArgumentException("Library Event Id is null.");
+            throw new IllegalArgumentException("Library Event Id is null.");
         }
 
         libraryEventsRepository.findById(libraryEvent.getLibraryEventId())
                 .map(record -> {
                     record.setLibraryEventType(LibraryEventType.UPDATE);
-
-                    Book book = record.getBook();
-                    Book libraryEventBook = libraryEvent.getBook();
-                    book.setBookAuthor(libraryEventBook.getBookAuthor());
-                    book.setBookName(libraryEventBook.getBookName());
+                    libraryEvent.getBook().setLibraryEvent(record);
+                    record.setBook(libraryEvent.getBook());
 
                     libraryEventsRepository.save(record);
 
@@ -61,13 +63,20 @@ public class LibraryEventsService {
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Library Event Id not found."));
 
-                log.info("Library Event identified by id : {} was successfully updated.", libraryEvent.getLibraryEventId());
+        log.info("Library Event identified by id : {} was successfully updated.", libraryEvent.getLibraryEventId());
     }
 
     private void save(LibraryEvent libraryEvent) {
         libraryEvent.getBook().setLibraryEvent(libraryEvent);
-        libraryEventsRepository.save(libraryEvent);
 
-        log.info("Successfully persisted the Library Event {} ", libraryEvent);
+        try {
+            libraryEventsRepository.save(libraryEvent);
+
+            log.info("Successfully persisted the Library Event {} ", libraryEvent);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Book referred to by Id : {} exists already", libraryEvent.getBook().getBookId());
+
+            throw new DuplicateKeyException(String.format("Book referred to by Id : %d exists already", libraryEvent.getBook().getBookId()));
+        }
     }
 }
