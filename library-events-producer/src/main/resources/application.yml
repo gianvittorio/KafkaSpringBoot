@@ -16,6 +16,7 @@ spring:
       properties:
         acks: all
         retries: 10
+        retry.backoff.ms: 1000
   admin:
     properties:
       bootstrap-servers: kafka-broker:9092,kafka-broker-2:9093,kafka-broker-3:9094
