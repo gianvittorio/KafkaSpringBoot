@@ -74,7 +74,7 @@ public class LibraryEventsConsumerIntegrationTest {
     @AfterEach
     public void tearDown() throws InterruptedException {
         libraryEventsRepository.deleteAll();
-        new CountDownLatch(1).await(2, TimeUnit.SECONDS);
+        new CountDownLatch(1).await(3, TimeUnit.SECONDS);
     }
 
     @Test
@@ -165,6 +165,32 @@ public class LibraryEventsConsumerIntegrationTest {
                 .onMessage(isA(ConsumerRecord.class));
         verify(libraryEventsServiceSpy, atLeastOnce())
                 .processLibraryEvent(isA(ConsumerRecord.class));
+
+        assertTrue(libraryEventsRepository.findById(randomId).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Must trigger recovery logic whenever passing \"000\" as libraryEventId.")
+    public void publishUpdate000LibraryEvent() throws ExecutionException, InterruptedException, JsonProcessingException {
+        // Given
+        int randomId = 000;
+        String json = String.format("{\"libraryEventId\": %d,\"libraryEventType\":\"UPDATE\",\"book\":" +
+                "{\"bookId\":123,\"bookName\":\"Kafka Using SpringBoot\",\"bookAuthor\":\"Dilip\"}}", randomId);
+
+        kafkaTemplate.sendDefault(json)
+                .get();
+
+        // When
+        new CountDownLatch(1)
+                .await(3, TimeUnit.SECONDS);
+
+        // Then
+        verify(libraryEventsConsumerSpy, atLeastOnce())
+                .onMessage(isA(ConsumerRecord.class));
+        verify(libraryEventsServiceSpy, atLeastOnce())
+                .processLibraryEvent(isA(ConsumerRecord.class));
+        verify(libraryEventsServiceSpy, atLeastOnce())
+                .handleRecovery(isA(ConsumerRecord.class));
 
         assertTrue(libraryEventsRepository.findById(randomId).isEmpty());
     }
